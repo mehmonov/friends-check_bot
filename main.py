@@ -154,7 +154,7 @@ async def process_answer(callback: types.CallbackQuery, state: FSMContext):
             await callback.message.edit_text("Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")
             return
         
-        share_text = f"Do'stlik testi!\n\nKeling, bilimingizni sinab ko'ramiz! Qani ko'raylik-chi, meni qanchalik yaxshi bilasiz?\n\n https://t.me/htcgcutcfbot?start={test_id}"
+        share_text = f"Do'stlik testi!\n\nKeling, bilimingizni sinab ko'ramiz! Qani ko'raylik-chi, meni qanchalik yaxshi bilasiz?\n\n https://t.me/friendschek_bot?start={test_id}"
         
         share_button = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
@@ -167,7 +167,7 @@ async def process_answer(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.edit_text(
             "Sizning testingiz tayyor! Endi do'stlaringiz bilan ulashing.\n\n"
             "Do'stlaringiz javob berganida, men sizga natijalarni yuboraman.\n\n"
-            f"Test linki: https://t.me/htcgcutcfbot?start={test_id}",
+            f"Test linki: https://t.me/friendschek_bot?start={test_id}",
             reply_markup=share_button
         )
 
