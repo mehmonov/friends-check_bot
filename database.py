@@ -11,7 +11,6 @@ class Database:
         conn = sqlite3.connect(self.db_file)
         cursor = conn.cursor()
         
-        # Test ma'lumotlari jadvali
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS tests (
             test_id TEXT PRIMARY KEY,
@@ -21,7 +20,6 @@ class Database:
         )
         ''')
         
-        # Test qatnashchilari jadvali
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS participants (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,16 +98,15 @@ class Database:
             cursor.execute('SELECT * FROM participants WHERE test_id = ?', (test_id,))
             participants = cursor.fetchall()
             
-            results = []
-            for p in participants:
-                results.append({
-                    'user_id': p[2],
-                    'answers': json.loads(p[3]),
-                    'correct_count': p[4],
-                    'completed_at': p[5]
-                })
+            return [{
+                'id': p[0],
+                'test_id': p[1],
+                'user_id': p[2],
+                'answers': json.loads(p[3]),
+                'correct_count': p[4],
+                'completed_at': p[5]
+            } for p in participants]
             
-            return results
         except Exception as e:
             print(f"Error getting participants: {e}")
             return []
@@ -125,7 +122,9 @@ class Database:
             )
             count = cursor.fetchone()[0]
             
+            conn.close()
             return count > 0
+            
         except Exception as e:
-            print(f"Error checking participant: {e}")
+            print(f"Error checking participant completion: {e}")
             return False
