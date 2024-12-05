@@ -1,6 +1,7 @@
 import sqlite3
 import json
 from typing import Dict, List, Optional
+from datetime import datetime, timedelta
 
 class Database:
     def __init__(self, db_file: str = "friendship_test.db"):
@@ -29,6 +30,15 @@ class Database:
             correct_count INTEGER,
             completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (test_id) REFERENCES tests (test_id)
+        )
+        ''')
+        
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_stats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action_type TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
         
@@ -128,3 +138,81 @@ class Database:
         except Exception as e:
             print(f"Error checking participant completion: {e}")
             return False
+    
+    def log_user_action(self, user_id: int, action_type: str):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                'INSERT INTO user_stats (user_id, action_type) VALUES (?, ?)',
+                (user_id, action_type)
+            )
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Error logging user action: {e}")
+            return False
+    
+    def get_daily_stats(self) -> Dict:
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            
+            today = datetime.now().date()
+            tomorrow = today + timedelta(days=1)
+            
+            cursor.execute('''
+                SELECT action_type, COUNT(*) 
+                FROM user_stats 
+                WHERE created_at >= ? AND created_at < ?
+                GROUP BY action_type
+            ''', (today.isoformat(), tomorrow.isoformat()))
+            
+            stats = {
+                'start_bot': 0,
+                'create_test': 0,
+                'complete_test': 0
+            }
+            
+            for action_type, count in cursor.fetchall():
+                stats[action_type] = count
+            
+            conn.close()
+            return stats
+        except Exception as e:
+            print(f"Error getting daily stats: {e}")
+            return {}
+    
+    def get_monthly_stats(self) -> Dict:
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            
+            today = datetime.now().date()
+            first_day = today.replace(day=1)
+            next_month = (first_day + timedelta(days=32)).replace(day=1)
+            
+            cursor.execute('''
+                SELECT action_type, COUNT(*) 
+                FROM user_stats 
+                WHERE created_at >= ? AND created_at < ?
+                GROUP BY action_type
+            ''', (first_day.isoformat(), next_month.isoformat()))
+            
+            stats = {
+                'start_bot': 0,
+                'create_test': 0,
+                'complete_test': 0
+            }
+            
+            for action_type, count in cursor.fetchall():
+                stats[action_type] = count
+            
+            conn.close()
+            return stats
+        except Exception as e:
+            print(f"Error getting monthly stats: {e}")
+            return {}

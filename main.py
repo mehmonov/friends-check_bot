@@ -27,6 +27,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN topilmadi. .env faylini tekshiring.")
 
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
+
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
@@ -81,8 +83,32 @@ def get_inline_keyboard(options, prefix="answer"):
         )])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
+@dp.message(Command(commands=["stats"]))
+async def cmd_stats(message: types.Message):
+    if message.from_user.id != ADMIN_ID:
+        return
+    
+    daily_stats = db.get_daily_stats()
+    monthly_stats = db.get_monthly_stats()
+    
+    stats_message = (
+        "📊 Bot Statistikasi\n\n"
+        "📅 Bugun:\n"
+        f"👥 Start bosganlar: {daily_stats.get('start_bot', 0)}\n"
+        f"📝 Test yaratganlar: {daily_stats.get('create_test', 0)}\n"
+        f"✍️ Test yechganlar: {daily_stats.get('complete_test', 0)}\n\n"
+        "📆 Shu oy:\n"
+        f"👥 Start bosganlar: {monthly_stats.get('start_bot', 0)}\n"
+        f"📝 Test yaratganlar: {monthly_stats.get('create_test', 0)}\n"
+        f"✍️ Test yechganlar: {monthly_stats.get('complete_test', 0)}"
+    )
+    
+    await message.answer(stats_message)
+
 @dp.message(Command(commands=["start"]))
 async def cmd_start(message: types.Message, state: FSMContext):
+    db.log_user_action(message.from_user.id, 'start_bot')
+    
     if message.text.startswith("/start test_"):
         test_id = message.text.split()[1]
         test_data = db.get_test(test_id)
@@ -149,6 +175,7 @@ async def process_answer(callback: types.CallbackQuery, state: FSMContext):
         test_id = f"test_{callback.from_user.id}_{random.randint(1000, 9999)}"
         
         test_data = db.save_test(test_id, callback.from_user.id, answers)
+        db.log_user_action(callback.from_user.id, 'create_test')
         
         if not test_data:
             await callback.message.edit_text("Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")
@@ -206,6 +233,7 @@ async def process_friend_answer(callback: types.CallbackQuery, state: FSMContext
         percentage = (correct_count / len(FRIENDSHIP_TEST_QUESTIONS)) * 100
         
         db.save_participant(test_id, callback.from_user.id, answers, correct_count)
+        db.log_user_action(callback.from_user.id, 'complete_test')
         
         await callback.message.edit_text(
             f"Test yakunlandi!\n\n"
