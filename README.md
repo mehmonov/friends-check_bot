@@ -1,5 +1,9 @@
 # Do'stlik Testi Telegram Boti
 
+Telegram bot:
+
+**https://t.me/friendschek_bot**
+
 ## Qisqacha tavsif
 Ushbu Telegram boti orqali siz do'stlaringiz bilan men do'stlik testini o'tkazishingiz mumkin. Bot sizga:
 - Test yaratish
